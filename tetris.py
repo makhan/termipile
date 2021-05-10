@@ -15,40 +15,40 @@ _BASE_TETROMINOS = [
             ' I  ',
         ],
         [
+            '    ',
             ' OO ',
             ' OO ',
             '    ',
+        ],
+        [
+            '    ',
+            ' TTT',
+            '  T ',
             '    ',
         ],
         [
-            'TTT ',
-            ' T  ',
-            '    ',
-            '    ',
-        ],
-        [
-            ' J  ',
-            ' J  ',
-            'JJ  ',
+            '  J ',
+            '  J ',
+            ' JJ ',
             '    ',
 
         ],
         [
-            'L   ',
-            'L   ',
-            'LL  ',
+            ' L  ',
+            ' L  ',
+            ' LL ',
             '    ',
         ],
         [
+            '    ',
             ' SS ',
             'SS  ',
             '    ',
-            '    ',
         ],
         [
+            '    ',
             'ZZ  ',
             ' ZZ ',
-            '    ',
             '    ',
         ],
 ]
@@ -146,7 +146,7 @@ def rotate(piece):
     rotated_piece = [[' ' for i in range(4)] for j in range(4)]
     for i, row in enumerate(piece):
         for j, char in enumerate(row):
-            rotated_piece[j][i] = char
+            rotated_piece[j][3 - i] = char
     return rotated_piece
 
 
