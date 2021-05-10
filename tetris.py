@@ -119,7 +119,7 @@ class GameBoard:
 
 class GamePiece:
 
-    def __init__(self, piece, start_x, start_y=1):
+    def __init__(self, piece, start_x, start_y=0):
         self._piece = list(piece)
         self.x = start_x
         self.y = start_y
@@ -204,7 +204,11 @@ outer = None
 def main(stdscr):
     stdscr.clear()
     board = GameBoard(30, 30)
-    piece = GamePiece(_BASE_TETROMINOS[6], _WIDTH // 2 - 2)
+    start_y = 0
+    start_piece = _BASE_TETROMINOS[random.randrange(0, 7)]
+    if start_piece[0] == '    ':
+        start_y = -1
+    piece = GamePiece(start_piece, _WIDTH // 2 - 2, start_y)
     board.setPiece(piece)
     gameLoop(stdscr, board)
     time.sleep(1)
