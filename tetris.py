@@ -61,6 +61,7 @@ class GameBoard:
         self._height = height
         self.current_piece = None
         self.score = 0
+        self.level = 0
         self.lines = 0
         self.clearBoard()
 
@@ -136,7 +137,8 @@ class GameBoard:
     def deleteRows(self, rows):
         for row_index in sorted(rows):
             self._deleteRow(row_index)
-        self.score += 2 ** (len(rows) - 1)
+        factors = [0, 40, 100, 300, 1200]
+        self.score += factors[len(rows)] * (self.level + 1)
         self.lines += len(rows)
 
 
@@ -185,6 +187,7 @@ def render(stdscr, game_board):
                 stdscr.addch(y, x, char)
     stdscr.addstr(10, _WIDTH + 5, 'score: %d' % game_board.score)
     stdscr.addstr(11, _WIDTH + 5, 'lines: %d' % game_board.lines)
+    stdscr.addstr(12, _WIDTH + 5, 'level: %d' % game_board.level)
     stdscr.refresh()
 
 
