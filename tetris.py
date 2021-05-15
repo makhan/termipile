@@ -157,8 +157,14 @@ class GameBoard:
         # This is not very efficient, but fast enough for tetris.
         new_piece = self.current_piece.copy()
         if rotation:
-            new_piece.rotate(rotation)
-        if dx or dy:
+            deltas = ((0, 0), (1, 0), (-1, 0))
+            for del_x, del_y in deltas:
+                new_piece = self.current_piece.copy()
+                new_piece.rotate(rotation)
+                new_piece.move(del_x, del_y)
+                if self._canFit(new_piece):
+                    break
+        elif dx or dy:
             new_piece.move(dx, dy)
         if self._canFit(new_piece):
             self.current_piece = new_piece
