@@ -4,6 +4,7 @@ import curses
 import time
 import random
 import collections
+import enum
 
 _HEIGHT = 20
 _WIDTH = 10
@@ -53,6 +54,53 @@ _BASE_TETROMINOS = [
             '    ',
         ],
 ]
+
+
+class Actions(enum.Enum):
+    ROTATE_LEFT = enum.auto()
+    ROTATE_RIGHT = enum.auto()
+    DOWN = enum.auto()
+    LEFT = enum.auto()
+    RIGHT = enum.auto()
+    HARD_DROP = enum.auto()
+    PAUSE = enum.auto()
+    HOLD = enum.auto()
+
+_KEY_MAPPINGS = {
+        Actions.ROTATE_LEFT: [curses.KEY_COMMAND, ord('z')],
+        Actions.ROTATE_RIGHT: [ curses.KEY_UP, ord('x')],
+        Actions.DOWN: [ curses.KEY_DOWN ],
+        Actions.LEFT: [curses.KEY_LEFT],
+        Actions.RIGHT: [curses.KEY_RIGHT],
+        Actions.HARD_DROP: [ord(' ')],
+        Actions.PAUSE: [curses.KEY_BREAK, curses.KEY_F1],
+        Actions.HOLD: [curses.KEY_SRIGHT, curses.KEY_SLEFT, ord('c')],
+}
+
+_KEY_ACTIONS= {
+        Actions.ROTATE_LEFT: (lambda stdscr, game_board: game_board.movePiece(0, 0, rotate=True)),
+        Actions.ROTATE_RIGHT: (lambda stdscr, game_board: game_board.movePiece(0, 0, rotate=True)),
+        Actions.DOWN: (lambda stdscr, game_board: game_board.movePiece(dy=1, dx=0, rotate=False)),
+        Actions.LEFT: (lambda stdscr, game_board: game_board.movePiece(dy=0, dx=-1, rotate=False)),
+        Actions.RIGHT: (lambda stdscr, game_board: game_board.movePiece(dy=0, dx=1, rotate=False)),
+        # Not implemented yet
+        Actions.HARD_DROP: (lambda stdscr, game_board: None),
+        Actions.PAUSE: (lambda stdscr, game_board: None),
+        Actions.HOLD: (lambda stdscr, game_board: None),
+}
+
+
+class Direction(enum.IntEnum):
+    LEFT = 0
+    RIGHT = 1
+
+
+_ROTATION_FUNCTION = {
+        Direction.LEFT: (lambda i, j: (j, (3 - i))),
+        Direction.RIGHT: (lambda i, j: ((3- j), i)),
+}
+
+
 
 class RandomGenerator:
 
@@ -193,11 +241,13 @@ class GamePiece:
 
 
 # TODO(muntasir): Precompute rotations
-def rotate(piece):
+def rotate(piece, direction=Direction.RIGHT):
     rotated_piece = [[' ' for i in range(4)] for j in range(4)]
+    rotation_function = _ROTATION_FUNCTION[direction]
     for i, row in enumerate(piece):
         for j, char in enumerate(row):
-            rotated_piece[j][3 - i] = char
+            i_, j_ = rotation_function(i, j)
+            rotated_piece[i_][j_] = char
     return rotated_piece
 
 
@@ -256,14 +306,11 @@ def gameLoop(stdscr, game_board):
         if ch != curses.ERR:
             if ch == ord('q'):
                 break
-            elif ch == curses.KEY_LEFT:
-                game_board.movePiece(-1, 0, False)
-            elif ch == curses.KEY_RIGHT:
-                game_board.movePiece(1, 0, False)
-            elif ch == curses.KEY_DOWN:
-                game_board.movePiece(0, 1, False)
-            elif ch == curses.KEY_UP:
-                game_board.movePiece(0, 0, True)
+            else:
+                for action, keys in _KEY_MAPPINGS.items():
+                    if ch in keys:
+                        action_function = _KEY_ACTIONS[action]
+                        action_function(stdscr, game_board)
 
         if ticks % speed == 0 and running:
             # Game logic.
@@ -277,7 +324,9 @@ def gameLoop(stdscr, game_board):
         if running:
             render(stdscr, game_board)
         else:
-           stdscr.addstr(_HEIGHT // 2, _WIDTH // 2, "Game Over")
+           stdscr.addstr(_HEIGHT // 2 - 4, _WIDTH // 2, "           ")
+           stdscr.addstr(_HEIGHT // 2 - 3, _WIDTH // 2, " Game Over ", curses.color_pair(7))
+           stdscr.addstr(_HEIGHT // 2 - 2, _WIDTH // 2, "           ")
         ticks += 1
 
 
