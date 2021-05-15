@@ -9,6 +9,9 @@ import enum
 _HEIGHT = 20
 _WIDTH = 10
 
+# TODO(muntasir): Remove
+dstdscr = None
+
 _BASE_TETROMINOS = [
         [
             ' I  ',
@@ -78,11 +81,11 @@ _KEY_MAPPINGS = {
 }
 
 _KEY_ACTIONS= {
-        Actions.ROTATE_LEFT: (lambda stdscr, game_board: game_board.movePiece(0, 0, rotate=True)),
-        Actions.ROTATE_RIGHT: (lambda stdscr, game_board: game_board.movePiece(0, 0, rotate=True)),
-        Actions.DOWN: (lambda stdscr, game_board: game_board.movePiece(dy=1, dx=0, rotate=False)),
-        Actions.LEFT: (lambda stdscr, game_board: game_board.movePiece(dy=0, dx=-1, rotate=False)),
-        Actions.RIGHT: (lambda stdscr, game_board: game_board.movePiece(dy=0, dx=1, rotate=False)),
+        Actions.ROTATE_LEFT: (lambda stdscr, game_board: game_board.movePiece(0, 0, rotation=Direction.LEFT)),
+        Actions.ROTATE_RIGHT: (lambda stdscr, game_board: game_board.movePiece(0, 0, rotation=Direction.RIGHT)),
+        Actions.DOWN: (lambda stdscr, game_board: game_board.movePiece(dy=1, dx=0, rotation=None)),
+        Actions.LEFT: (lambda stdscr, game_board: game_board.movePiece(dy=0, dx=-1, rotation=None)),
+        Actions.RIGHT: (lambda stdscr, game_board: game_board.movePiece(dy=0, dx=1, rotation=None)),
         # Not implemented yet
         Actions.HARD_DROP: (lambda stdscr, game_board: None),
         Actions.PAUSE: (lambda stdscr, game_board: None),
@@ -91,13 +94,13 @@ _KEY_ACTIONS= {
 
 
 class Direction(enum.IntEnum):
-    LEFT = 0
-    RIGHT = 1
+    LEFT = 1
+    RIGHT = 2
 
 
 _ROTATION_FUNCTION = {
-        Direction.LEFT: (lambda i, j: (j, (3 - i))),
-        Direction.RIGHT: (lambda i, j: ((3- j), i)),
+        Direction.RIGHT: (lambda i, j: (j, (3 - i))),
+        Direction.LEFT: (lambda i, j: ((3- j), i)),
 }
 
 
@@ -150,11 +153,11 @@ class GameBoard:
         return self._canFit(piece)
 
 
-    def movePiece(self, dx, dy, rotate):
+    def movePiece(self, dx, dy, rotation):
         # This is not very efficient, but fast enough for tetris.
         new_piece = self.current_piece.copy()
-        if rotate:
-            new_piece.rotate()
+        if rotation:
+            new_piece.rotate(rotation)
         if dx or dy:
             new_piece.move(dx, dy)
         if self._canFit(new_piece):
@@ -162,7 +165,7 @@ class GameBoard:
 
     def descend(self):
         old_piece = self.current_piece
-        self.movePiece(0, 1, False)
+        self.movePiece(0, 1, None)
         return old_piece != self.current_piece
 
 
@@ -232,9 +235,9 @@ class GamePiece:
     def __getitem__(self, idx):
         return self._piece[idx]
 
-    def rotate(self):
+    def rotate(self, direction):
         # TODO(muntasir): Check if rotation is valid
-        self._piece = rotate(self._piece)
+        self._piece = rotate(self._piece, direction=direction)
 
     def copy(self):
         return GamePiece(self._piece, self.x, self.y)
@@ -242,6 +245,7 @@ class GamePiece:
 
 # TODO(muntasir): Precompute rotations
 def rotate(piece, direction=Direction.RIGHT):
+    global dtdscr
     rotated_piece = [[' ' for i in range(4)] for j in range(4)]
     rotation_function = _ROTATION_FUNCTION[direction]
     for i, row in enumerate(piece):
@@ -339,6 +343,8 @@ def handleCompletedLines(game_board, start_y):
     game_board.deleteRows(lines)
 
 def main(stdscr):
+    global dstdscr
+    dstdscr = stdscr
     stdscr.clear()
     board = GameBoard(_WIDTH, _HEIGHT)
     gameLoop(stdscr, board)
@@ -346,3 +352,4 @@ def main(stdscr):
 
 if __name__ == '__main__':
     curses.wrapper(main)
+    print(_ROTATION_FUNCTION[Direction.LEFT](3,2))
