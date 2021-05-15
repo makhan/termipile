@@ -95,7 +95,7 @@ class GameBoard:
 
     def clearBoard(self):
         self._board = [list('┃' + ' ' * self._width + '┃') for i in range(self._height)]
-        self._board.append('#' * (self._width + 2))
+        self._board.append('┗' + '━' * self._width + '┛')
 
     def setPiece(self, piece):
         self.current_piece = piece
@@ -207,7 +207,6 @@ def renderShape(stdscr, lines, y_offset, x_offset, blank='.'):
             index = '0IOTJLSZ'.find(char)
             y_pos, x_pos = y + y_offset, x + x_offset
             if index != -1:
-                #stdscr.addch(y, x, chr(9606), curses.color_pair(index))
                 stdscr.addch(y_pos, x_pos, chr(9606), curses.color_pair(index))
                 stdscr.refresh()
             elif char == ' ':
@@ -218,7 +217,8 @@ def renderShape(stdscr, lines, y_offset, x_offset, blank='.'):
 def render(stdscr, game_board):
     lines = game_board.getRenderableBoard()
     next_piece = GamePiece(_BASE_TETROMINOS[game_board.piece_queue.preview()], 0, 0)
-    renderShape(stdscr, lines, 0, 0)
+    stdscr.addstr(0, 0, '┏' + '━' *_WIDTH + '┓')
+    renderShape(stdscr, lines, 1, 0)
     renderShape(stdscr, next_piece, 4, _WIDTH + 5, blank=' ')
     stdscr.addstr(3, _WIDTH + 5, 'Next:')
     stdscr.addstr(10, _WIDTH + 5, 'score: %d' % game_board.score)
