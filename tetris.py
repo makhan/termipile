@@ -3,6 +3,7 @@
 import curses
 import time
 import random
+import collections
 
 _HEIGHT = 20
 _WIDTH = 10
@@ -53,6 +54,26 @@ _BASE_TETROMINOS = [
         ],
 ]
 
+class RandomGenerator:
+
+    def __init__(self):
+        self._bag = collections.deque()
+        self._topUpIfNecessary()
+
+    def _topUpIfNecessary(self):
+        if len(self._bag) < 2:
+            new_values = list(range(7))
+            random.shuffle(new_values)
+            self._bag.extend(new_values)
+
+    def next(self):
+        value = self._bag.popleft()
+        self._topUpIfNecessary()
+        return value
+
+    def preview(self):
+        return self._bag[0]
+
 
 class GameBoard:
 
@@ -64,9 +85,16 @@ class GameBoard:
         self.level = 0
         self.lines = 0
         self.clearBoard()
+        self.piece_queue = RandomGenerator()
+        start_y = 0
+        start_piece = _BASE_TETROMINOS[self.piece_queue.next()]
+        if start_piece[0] == '    ':
+            start_y = -1
+        piece = GamePiece(start_piece, _WIDTH // 2 - 2, start_y)
+        self.setPiece(piece)
 
     def clearBoard(self):
-        self._board = [list('#' + ' ' * self._width + '#') for i in range(self._height)]
+        self._board = [list('┃' + ' ' * self._width + '┃') for i in range(self._height)]
         self._board.append('#' * (self._width + 2))
 
     def setPiece(self, piece):
@@ -173,18 +201,26 @@ def rotate(piece):
     return rotated_piece
 
 
-def render(stdscr, game_board):
-    lines = game_board.getRenderableBoard()
+def renderShape(stdscr, lines, y_offset, x_offset, blank='.'):
     for y,line in enumerate(lines):
         for x, char in enumerate(line):
             index = '0IOTJLSZ'.find(char)
+            y_pos, x_pos = y + y_offset, x + x_offset
             if index != -1:
-                stdscr.addch(y, x, chr(9606), curses.color_pair(index))
+                #stdscr.addch(y, x, chr(9606), curses.color_pair(index))
+                stdscr.addch(y_pos, x_pos, chr(9606), curses.color_pair(index))
                 stdscr.refresh()
             elif char == ' ':
-                stdscr.addch(y, x, '.')
+                stdscr.addch(y_pos, x_pos, blank)
             else:
-                stdscr.addch(y, x, char)
+                stdscr.addch(y_pos, x_pos, char)
+
+def render(stdscr, game_board):
+    lines = game_board.getRenderableBoard()
+    next_piece = GamePiece(_BASE_TETROMINOS[game_board.piece_queue.preview()], 0, 0)
+    renderShape(stdscr, lines, 0, 0)
+    renderShape(stdscr, next_piece, 4, _WIDTH + 5, blank=' ')
+    stdscr.addstr(3, _WIDTH + 5, 'Next:')
     stdscr.addstr(10, _WIDTH + 5, 'score: %d' % game_board.score)
     stdscr.addstr(11, _WIDTH + 5, 'lines: %d' % game_board.lines)
     stdscr.addstr(12, _WIDTH + 5, 'level: %d' % game_board.level)
@@ -235,7 +271,7 @@ def gameLoop(stdscr, game_board):
                 game_board.addPieceToBoard()
                 start_y = game_board.current_piece.y - 1
                 handleCompletedLines(game_board, start_y)
-                if not game_board.setPiece(GamePiece(_BASE_TETROMINOS[random.randrange(7)], _WIDTH // 2 - 2)):
+                if not game_board.setPiece(GamePiece(_BASE_TETROMINOS[game_board.piece_queue.next()], _WIDTH // 2 - 2)):
                    running = False
         # Render
         if running:
@@ -256,12 +292,6 @@ def handleCompletedLines(game_board, start_y):
 def main(stdscr):
     stdscr.clear()
     board = GameBoard(_WIDTH, _HEIGHT)
-    start_y = 0
-    start_piece = _BASE_TETROMINOS[random.randrange(0, 7)]
-    if start_piece[0] == '    ':
-        start_y = -1
-    piece = GamePiece(start_piece, _WIDTH // 2 - 2, start_y)
-    board.setPiece(piece)
     gameLoop(stdscr, board)
     time.sleep(1)
 
