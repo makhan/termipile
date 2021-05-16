@@ -9,6 +9,8 @@ import enum
 _HEIGHT = 20
 _WIDTH = 10
 
+_GAME_TICK_DELAY = 0.0625
+
 # TODO(muntasir): Remove
 dstdscr = None
 
@@ -157,6 +159,9 @@ class GameBoard:
         # This is not very efficient, but fast enough for tetris.
         new_piece = self.current_piece.copy()
         if rotation:
+            # "Wall kicks"
+            # Try rotating, rotating + move right, rotating + move left
+            # whichever works first.
             deltas = ((0, 0), (1, 0), (-1, 0))
             for del_x, del_y in deltas:
                 new_piece = self.current_piece.copy()
@@ -225,6 +230,7 @@ class GameBoard:
         factors = [0, 40, 100, 300, 1200]
         self.score += factors[len(rows)] * (self.level + 1)
         self.lines += len(rows)
+        self.level = min(15, self.lines / 10)
 
 
 class GamePiece:
@@ -297,7 +303,7 @@ def flushInput(stdscr):
 def gameLoop(stdscr, game_board):
     stdscr.nodelay(True)
     ticks = 0
-    speed = 8
+    speed = 15 - game_board.level + 1
     running = True
     curses.start_color()
     curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
@@ -309,7 +315,7 @@ def gameLoop(stdscr, game_board):
     curses.init_pair(7, curses.COLOR_RED, curses.COLOR_BLACK)
     while True:
         flushInput(stdscr)
-        time.sleep(0.0625)
+        time.sleep(_GAME_TICK_DELAY)
 
         # User input
         ch = stdscr.getch()
@@ -328,6 +334,7 @@ def gameLoop(stdscr, game_board):
                 game_board.addPieceToBoard()
                 start_y = game_board.current_piece.y - 1
                 handleCompletedLines(game_board, start_y)
+                speed = 15 - game_board.level + 1
                 if not game_board.setPiece(GamePiece(_BASE_TETROMINOS[game_board.piece_queue.next()], _WIDTH // 2 - 2)):
                    running = False
         # Render
