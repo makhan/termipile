@@ -365,4 +365,3 @@ def main(stdscr):
 
 if __name__ == '__main__':
     curses.wrapper(main)
-    print(_ROTATION_FUNCTION[Direction.LEFT](3,2))
