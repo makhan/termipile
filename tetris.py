@@ -330,8 +330,6 @@ def gameLoop(stdscr, game_board):
 
         if ticks % speed == 0 and running:
             # Game logic.
-            stdscr.addstr(0, _WIDTH + 10, 'ticks: %d' % ticks)
-
             if not game_board.descend():
                 game_board.addPieceToBoard()
                 start_y = game_board.current_piece.y - 1
@@ -363,7 +361,6 @@ def main(stdscr):
     dstdscr = stdscr
     stdscr.clear()
     board = GameBoard(_WIDTH, _HEIGHT)
-    board.level = 15
     gameLoop(stdscr, board)
     time.sleep(1)
 
