@@ -230,7 +230,7 @@ class GameBoard:
         factors = [0, 40, 100, 300, 1200]
         self.score += factors[len(rows)] * (self.level + 1)
         self.lines += len(rows)
-        self.level = min(15, self.lines / 10)
+        self.level = min(15, max(self.level, self.lines / 10))
 
 
 class GamePiece:
@@ -330,11 +330,14 @@ def gameLoop(stdscr, game_board):
 
         if ticks % speed == 0 and running:
             # Game logic.
+            stdscr.addstr(0, _WIDTH + 10, 'ticks: %d' % ticks)
+
             if not game_board.descend():
                 game_board.addPieceToBoard()
                 start_y = game_board.current_piece.y - 1
                 handleCompletedLines(game_board, start_y)
                 speed = 15 - game_board.level + 1
+                stdscr.addstr(1, _WIDTH + 10, 'speed: %d' % speed)
                 if not game_board.setPiece(GamePiece(_BASE_TETROMINOS[game_board.piece_queue.next()], _WIDTH // 2 - 2)):
                    running = False
         # Render
@@ -360,6 +363,7 @@ def main(stdscr):
     dstdscr = stdscr
     stdscr.clear()
     board = GameBoard(_WIDTH, _HEIGHT)
+    board.level = 15
     gameLoop(stdscr, board)
     time.sleep(1)
 
