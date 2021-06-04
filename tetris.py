@@ -5,6 +5,7 @@ import time
 import random
 import collections
 import enum
+import logging
 
 _HEIGHT = 20
 _WIDTH = 10
@@ -169,14 +170,16 @@ class GameBoard:
                 new_piece.move(del_x, del_y)
                 if self._canFit(new_piece):
                     break
-        elif dx or dy:
+        if dx or dy:
             new_piece.move(dx, dy)
         if self._canFit(new_piece):
             self.current_piece = new_piece
 
     def descend(self):
+        logging.debug('Trying to descend')
         old_piece = self.current_piece
         self.movePiece(0, 1, None)
+        logging.debug('Old piece: %s, new piece %s' % (old_piece, self.current_piece))
         return old_piece != self.current_piece
 
 
@@ -328,16 +331,26 @@ def gameLoop(stdscr, game_board):
                         action_function = _KEY_ACTIONS[action]
                         action_function(stdscr, game_board)
 
-        if ticks % speed == 0 and running:
+
+        mod_value = ticks%speed
+        logging.debug('ticks: %d, speed: %d ticks%%speed: %d running: %u' % (ticks, speed, mod_value, running ))
+        if mod_value == 0 and running:
             # Game logic.
+            logging.debug('Game logic')
             if not game_board.descend():
+                logging.debug('Failed to descend')
                 game_board.addPieceToBoard()
                 start_y = game_board.current_piece.y - 1
                 handleCompletedLines(game_board, start_y)
                 speed = 15 - game_board.level + 1
+                logging.debug(' set Speed: %d', speed)
                 stdscr.addstr(1, _WIDTH + 10, 'speed: %d' % speed)
                 if not game_board.setPiece(GamePiece(_BASE_TETROMINOS[game_board.piece_queue.next()], _WIDTH // 2 - 2)):
                    running = False
+            else:
+                logging.debug('Descended')
+        else:
+            logging.debug('Skipped')
         # Render
         if running:
             render(stdscr, game_board)
@@ -357,6 +370,7 @@ def handleCompletedLines(game_board, start_y):
     game_board.deleteRows(lines)
 
 def main(stdscr):
+    logging.basicConfig(filename='tetris.log', level=logging.DEBUG)
     global dstdscr
     dstdscr = stdscr
     stdscr.clear()
