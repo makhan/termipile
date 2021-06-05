@@ -176,10 +176,8 @@ class GameBoard:
             self.current_piece = new_piece
 
     def descend(self):
-        logging.debug('Trying to descend')
         old_piece = self.current_piece
         self.movePiece(0, 1, None)
-        logging.debug('Old piece: %s, new piece %s' % (old_piece, self.current_piece))
         return old_piece != self.current_piece
 
 
@@ -233,7 +231,7 @@ class GameBoard:
         factors = [0, 40, 100, 300, 1200]
         self.score += factors[len(rows)] * (self.level + 1)
         self.lines += len(rows)
-        self.level = min(15, max(self.level, self.lines / 10))
+        self.level = min(15, max(self.level, self.lines // 10))
 
 
 class GamePiece:
@@ -306,8 +304,8 @@ def flushInput(stdscr):
 def gameLoop(stdscr, game_board):
     stdscr.nodelay(True)
     ticks = 0
-    speed = 15 - game_board.level + 1
     running = True
+    speed = 15 - game_board.level + 1
     curses.start_color()
     curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
@@ -333,32 +331,28 @@ def gameLoop(stdscr, game_board):
 
 
         mod_value = ticks%speed
-        logging.debug('ticks: %d, speed: %d ticks%%speed: %d running: %u' % (ticks, speed, mod_value, running ))
         if mod_value == 0 and running:
             # Game logic.
-            logging.debug('Game logic')
             if not game_board.descend():
                 logging.debug('Failed to descend')
                 game_board.addPieceToBoard()
                 start_y = game_board.current_piece.y - 1
                 handleCompletedLines(game_board, start_y)
                 speed = 15 - game_board.level + 1
-                logging.debug(' set Speed: %d', speed)
-                stdscr.addstr(1, _WIDTH + 10, 'speed: %d' % speed)
                 if not game_board.setPiece(GamePiece(_BASE_TETROMINOS[game_board.piece_queue.next()], _WIDTH // 2 - 2)):
+                   logging.debug('Set running to false')
                    running = False
-            else:
-                logging.debug('Descended')
-        else:
-            logging.debug('Skipped')
         # Render
         if running:
             render(stdscr, game_board)
         else:
-           stdscr.addstr(_HEIGHT // 2 - 4, _WIDTH // 2, "           ")
-           stdscr.addstr(_HEIGHT // 2 - 3, _WIDTH // 2, " Game Over ", curses.color_pair(7))
-           stdscr.addstr(_HEIGHT // 2 - 2, _WIDTH // 2, "           ")
+            logging.debug('Game over')
+            stdscr.addstr(_HEIGHT // 2 - 4, _WIDTH // 2, "           ")
+            stdscr.addstr(_HEIGHT // 2 - 3, _WIDTH // 2, " Game Over ", curses.color_pair(7))
+            stdscr.addstr(_HEIGHT // 2 - 2, _WIDTH // 2, "           ")
+
         ticks += 1
+    logging.debug('Exiting game loop')
 
 
 def boundsCheck(value, maxBound, minBound=0):
@@ -375,7 +369,10 @@ def main(stdscr):
     dstdscr = stdscr
     stdscr.clear()
     board = GameBoard(_WIDTH, _HEIGHT)
-    gameLoop(stdscr, board)
+    try:
+        gameLoop(stdscr, board)
+    except Exception as e:
+        logger.debug('Error: %s' % str(e))
     time.sleep(1)
 
 if __name__ == '__main__':
