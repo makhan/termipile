@@ -1,19 +1,16 @@
 #! /usr/bin/python
 
-import curses
-import time
-import random
 import collections
+import curses
 import enum
 import logging
+import random
+import time
 
 _HEIGHT = 20
 _WIDTH = 10
 
 _GAME_TICK_DELAY = 0.0625
-
-# TODO(muntasir): Remove
-dstdscr = None
 
 _BASE_TETROMINOS = [
         [
@@ -365,8 +362,6 @@ def handleCompletedLines(game_board, start_y):
 
 def main(stdscr):
     logging.basicConfig(filename='tetris.log', level=logging.DEBUG)
-    global dstdscr
-    dstdscr = stdscr
     stdscr.clear()
     board = GameBoard(_WIDTH, _HEIGHT)
     try:
